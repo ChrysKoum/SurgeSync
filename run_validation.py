@@ -72,7 +72,7 @@ def load_config():
             return json.load(f)
     return {
         "auto_remediation": {"enabled": False, "mode": "tasks"},
-        "auto_fix": {"enabled": False},
+        "semi_auto_fix": {"enabled": False},
         "validation": {"block_on_drift": True}
     }
 
@@ -98,13 +98,13 @@ def main():
     config = load_config()
     auto_remediation_enabled = config.get("auto_remediation", {}).get("enabled", False)
     remediation_mode = config.get("auto_remediation", {}).get("mode", "tasks")
-    auto_fix_enabled = config.get("auto_fix", {}).get("enabled", False)
+    semi_auto_enabled = config.get("semi_auto_fix", {}).get("enabled", False)
     allow_commit_with_tasks = config.get("validation", {}).get("allow_commit_with_tasks", True)
     
     if auto_remediation_enabled:
-        if remediation_mode == "auto-fix" and auto_fix_enabled:
-            print("🤖 Auto-fix mode: ENABLED")
-            print("   Kiro will automatically fix drift and create a follow-up commit")
+        if remediation_mode == "semi-auto" and semi_auto_enabled:
+            print("🤖 Semi-automatic fix mode: ENABLED")
+            print("   You will need to manually ask Kiro to fix drift after commit")
         else:
             print("🔧 Auto-remediation mode: ENABLED")
             print("   Tasks will be generated for any detected drift")
@@ -184,8 +184,8 @@ def main():
                 }
             
             # Check mode
-            if remediation_mode == "auto-fix" and auto_fix_enabled:
-                print("  AUTO-FIX MODE")
+            if remediation_mode == "semi-auto" and semi_auto_enabled:
+                print("  SEMI-AUTOMATIC FIX MODE")
                 print("=" * 70)
                 print()
                 
@@ -196,31 +196,31 @@ def main():
                 auto_fix_result = enable_auto_fix(result_dict, config, commit_msg)
                 
                 if auto_fix_result.get('requires_kiro_agent', False):
-                    print("🤖 Kiro Agent Auto-Fix")
+                    print("🤖 Semi-Automatic Fix Available")
                     print()
-                    print(f"   Estimated credits: {auto_fix_result.get('estimated_credits', 'Unknown')}")
+                    print(f"   Estimated effort: {auto_fix_result.get('estimated_credits', 'Unknown')} issues to fix")
                     print()
-                    print("📋 Kiro will automatically:")
+                    print("📋 What needs fixing:")
                     for fix in auto_fix_result.get('fixes_applied', []):
-                        print(f"   ✓ {fix}")
+                        print(f"   • {fix}")
                     print()
-                    print("🔄 Process:")
-                    print("   1. Your commit proceeds")
-                    print("   2. Kiro analyzes drift")
-                    print("   3. Kiro creates fixes")
-                    print("   4. Kiro commits fixes")
-                    print("   5. Clean git history maintained")
+                    print("🔄 Next Steps:")
+                    print("   1. Your commit will proceed")
+                    print("   2. Open Kiro chat")
+                    print("   3. Say: 'Fix the drift from my last commit'")
+                    print("   4. Kiro will make all fixes")
+                    print("   5. Kiro will create a follow-up commit")
                     print()
                     print("=" * 70)
                     print()
-                    print("✅ Commit ALLOWED - Kiro will auto-fix drift in background")
+                    print("✅ Commit ALLOWED - Manual Kiro invocation required")
                     print()
-                    print("💡 Tip: Ask Kiro to 'Fix the drift from my last commit'")
-                    print("   Or wait for automatic processing")
+                    print("💡 After commit, open Kiro and say:")
+                    print("   'Fix the drift from my last commit'")
                     print()
                     return 0  # Allow commit
                 else:
-                    print(f"❌ Auto-fix failed: {auto_fix_result.get('message')}")
+                    print(f"❌ Semi-auto fix failed: {auto_fix_result.get('message')}")
                     print()
                     return 1
             

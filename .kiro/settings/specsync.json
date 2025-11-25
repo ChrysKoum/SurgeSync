@@ -1,16 +1,15 @@
 {
   "auto_remediation": {
-    "enabled": true,
-    "mode": "auto-fix",
-    "description": "Mode options: 'tasks' (generate task list), 'auto-fix' (fully automated fixes)"
+    "enabled": false,
+    "mode": "tasks",
+    "description": "Mode options: 'blocking' (block commit on drift), 'tasks' (generate task list), 'semi-auto' (prompt user to ask Kiro for fixes)"
   },
-  "auto_fix": {
-    "enabled": true,
-    "require_user_credits": true,
+  "semi_auto_fix": {
+    "enabled": false,
+    "require_user_invocation": true,
     "create_separate_commit": true,
     "commit_message_template": "🤖 SpecSync: Auto-fix drift for {original_commit}",
-    "amend_original_commit": false,
-    "description": "Fully automated mode - Kiro fixes drift and commits automatically"
+    "description": "Semi-automatic mode - User must manually ask Kiro to fix drift. Kiro then fixes everything and commits automatically."
   },
   "validation": {
     "block_on_drift": false,
@@ -26,12 +25,12 @@
   "notification": {
     "show_task_summary": true,
     "open_tasks_file": false,
-    "notify_on_auto_fix": true
+    "notify_on_semi_auto": true
   },
   "git": {
     "preserve_original_commit": true,
     "create_fixup_commit": false,
     "auto_push": false,
-    "description": "Git behavior for auto-fix mode"
+    "description": "Git behavior for semi-auto mode"
   }
 }

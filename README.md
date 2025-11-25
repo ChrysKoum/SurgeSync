@@ -157,6 +157,70 @@ python demo_validation_flow.py
 pytest
 ```
 
+## Operating Modes
+
+SpecSync supports three modes for handling drift:
+
+### 1. Blocking Mode (Default)
+- ❌ Blocks commits when drift is detected
+- ✅ Ensures zero drift in history
+- 🎯 Best for: Production code, critical changes
+
+**Configuration:**
+```json
+{
+  "validation": {
+    "block_on_drift": true
+  },
+  "auto_remediation": {
+    "enabled": false
+  }
+}
+```
+
+### 2. Task Generation Mode
+- ✅ Allows commits to proceed
+- ✅ Generates `remediation-tasks.md` with fix instructions
+- ✅ Execute tasks one-by-one in Kiro
+- 🎯 Best for: Learning, incremental fixes
+
+**Configuration:**
+```json
+{
+  "auto_remediation": {
+    "enabled": true,
+    "mode": "tasks"
+  }
+}
+```
+
+### 3. Semi-Automatic Mode
+- ✅ Allows commits to proceed
+- ⚠️ **Requires manual Kiro invocation** after commit
+- ✅ Kiro fixes everything in one go
+- ✅ Creates follow-up commit automatically
+- 🎯 Best for: Rapid development, bulk fixes
+
+**Configuration:**
+```json
+{
+  "auto_remediation": {
+    "enabled": true,
+    "mode": "semi-auto"
+  },
+  "semi_auto_fix": {
+    "enabled": true
+  }
+}
+```
+
+**Important:** Semi-automatic mode is NOT fully automatic. After each commit, you must:
+1. Open Kiro chat
+2. Say: "Fix the drift from my last commit"
+3. Kiro will then make all fixes and create a commit
+
+See `SPECSYNC_FINAL_REALITY.md` for detailed mode comparison.
+
 ## Configuration
 
 ### Steering Rules
