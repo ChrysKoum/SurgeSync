@@ -52,3 +52,9 @@ async def get_user_posts(id: int):
 async def get_user_events(id: int):
     """Get events for a specific user."""
     return {"user_id": id, "events": []}
+
+    
+@router.get("/users/{id}/tasks")
+async def get_user_taskstaskstasks_____Sfafsaf_____events(id: int):
+    """Get tasks for a specific user."""
+    return {"user_id": id, "tasks": []}
