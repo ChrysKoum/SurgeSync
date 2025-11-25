@@ -151,19 +151,82 @@ Changes to this steering rules document take effect on the next validation run. 
 - Changes to other files in `.kiro/steering/`
 - Comments or whitespace changes in this file (rules are still reloaded, but behavior is unchanged)
 
+## Auto-Remediation Mode
+
+SpecSync supports **auto-remediation mode** where instead of just blocking commits, it automatically generates a task list to fix detected drift.
+
+### Configuration
+
+Edit `.kiro/settings/specsync.json`:
+
+```json
+{
+  "auto_remediation": {
+    "enabled": true,
+    "mode": "tasks"
+  },
+  "validation": {
+    "block_on_drift": false,
+    "allow_commit_with_tasks": true
+  }
+}
+```
+
+### How It Works
+
+When auto-remediation is enabled:
+
+1. **Validation runs** - Detects drift as normal
+2. **Tasks generated** - Creates `.kiro/specs/{feature}/remediation-tasks.md`
+3. **Commit allowed** - Commit proceeds with tasks file
+4. **Developer fixes** - Complete tasks at your own pace
+5. **Re-validate** - Run validation again to verify fixes
+
+### Task File Format
+
+Generated tasks include:
+- **Priority** - Importance level (1-10)
+- **Type** - spec, test, doc, or code
+- **File** - Which file to modify
+- **Details** - Specific changes needed
+- **Timestamp** - When task was created
+
+### Benefits
+
+- ✅ **Non-blocking** - Commits don't get blocked
+- ✅ **Organized** - All fixes in one place
+- ✅ **Prioritized** - Work on high-priority items first
+- ✅ **Trackable** - Check off tasks as you complete them
+- ✅ **Flexible** - Fix drift on your schedule
+
+### When to Use
+
+- **Development phase** - Move fast, fix drift later
+- **Prototyping** - Don't let validation slow you down
+- **Large changes** - Break fixes into manageable tasks
+- **Team workflow** - Assign tasks to different team members
+
+### When NOT to Use
+
+- **Production releases** - Ensure full alignment before release
+- **Critical fixes** - Fix drift immediately for important changes
+- **Small changes** - Easier to fix drift right away
+
 ## Validation Workflow
 
 When Kiro validates a commit, it follows this workflow:
 
 1. **Load Steering Rules** - Parse this document and cache rules
-2. **Get Git Context** - Use MCP tool to get staged diff and files
-3. **Apply Correlation Patterns** - Map staged files to specs, tests, docs
-4. **Check for False Positives** - Filter out ignored files
-5. **Detect Drift** - Compare code vs spec, code vs tests, code vs docs
-6. **Apply Validation Priorities** - Order issues by priority
-7. **Generate Suggestions** - Create minimal, actionable fix suggestions
-8. **Handle Conflicts** - Resolve any rule-drift conflicts
-9. **Return Result** - Allow or block commit with detailed feedback
+2. **Load Configuration** - Check if auto-remediation is enabled
+3. **Get Git Context** - Use MCP tool to get staged diff and files
+4. **Apply Correlation Patterns** - Map staged files to specs, tests, docs
+5. **Check for False Positives** - Filter out ignored files
+6. **Detect Drift** - Compare code vs spec, code vs tests, code vs docs
+7. **Apply Validation Priorities** - Order issues by priority
+8. **Generate Suggestions** - Create minimal, actionable fix suggestions
+9. **Handle Conflicts** - Resolve any rule-drift conflicts
+10. **Auto-Remediation** (if enabled) - Generate tasks file
+11. **Return Result** - Allow or block commit with detailed feedback
 
 ## Custom Project Conventions
 

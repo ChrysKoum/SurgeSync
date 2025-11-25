@@ -46,6 +46,46 @@ endpoints:
         description: "User not found"
     tests_required: true
 
+  - path: "/users/{id}/posts"
+    method: "GET"
+    description: "Get posts for a specific user"
+    parameters:
+      - name: "id"
+        type: "integer"
+        location: "path"
+        required: true
+        description: "User ID"
+    response:
+      type: "object"
+      properties:
+        user_id:
+          type: "integer"
+          description: "ID of the user"
+        posts:
+          type: "array"
+          description: "Array of user posts"
+    tests_required: true
+
+  - path: "/users/{id}/events"
+    method: "GET"
+    description: "Get events for a specific user"
+    parameters:
+      - name: "id"
+        type: "integer"
+        location: "path"
+        required: true
+        description: "User ID"
+    response:
+      type: "object"
+      properties:
+        user_id:
+          type: "integer"
+          description: "ID of the user"
+        events:
+          type: "array"
+          description: "Array of user events"
+    tests_required: true
+
 models:
   User:
     description: "User model representing a system user"

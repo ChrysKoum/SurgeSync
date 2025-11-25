@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "specsync-git": {
+      "command": "node",
+      "args": ["D:/business/6_Hackthons_Seminars/10_kiroween/mcp/dist/server.js"],
+      "disabled": false,
+      "autoApprove": ["get_staged_diff"]
+    }
+  }
+}

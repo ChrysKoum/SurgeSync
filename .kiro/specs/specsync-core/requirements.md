@@ -13,6 +13,9 @@ SpecSync is a commit-driven reliability layer that ensures specifications, code,
 - **MCP Tool**: Model Context Protocol tool that provides git context to Kiro
 - **Commit Hook**: An automated trigger that executes Kiro validation during the commit process
 - **Alignment**: The state where specs, code, tests, and documentation accurately reflect each other
+- **Auto-Remediation**: A mode where SpecSync generates tasks to fix drift instead of blocking commits
+- **Auto-Fix Mode**: A fully automated mode where Kiro agent automatically fixes drift and creates follow-up commits
+- **Kiro Credits**: Usage-based credits required for AI-powered auto-fix operations
 
 ## Requirements
 
@@ -111,3 +114,36 @@ SpecSync is a commit-driven reliability layer that ensures specifications, code,
 3. WHEN the example service code is modified, THE SpecSync System SHALL validate changes against the service spec
 4. WHEN the example service is committed, THE SpecSync System SHALL verify tests exist for all endpoints
 5. WHEN the example service documentation is generated, THE SpecSync System SHALL include API endpoint descriptions derived from the spec
+
+
+### Requirement 9
+
+**User Story:** As a developer, I want SpecSync to automatically fix drift using Kiro's AI agent, so that I can maintain alignment without manual intervention.
+
+#### Acceptance Criteria
+
+1. WHEN auto-fix mode is enabled and drift is detected, THE SpecSync System SHALL invoke Kiro agent to automatically fix all drift issues
+2. WHEN Kiro agent fixes drift, THE SpecSync System SHALL update specifications with missing endpoint or function definitions
+3. WHEN Kiro agent fixes drift, THE SpecSync System SHALL generate comprehensive unit tests for new functionality
+4. WHEN Kiro agent fixes drift, THE SpecSync System SHALL create or update documentation for new features
+5. WHEN Kiro agent completes fixes, THE SpecSync System SHALL create a separate commit with all auto-generated changes
+6. WHEN auto-fix is requested, THE SpecSync System SHALL estimate and display the number of credits required
+7. WHEN user has insufficient credits, THE SpecSync System SHALL fall back to task generation mode
+8. WHEN auto-fix commit is created, THE SpecSync System SHALL use a recognizable commit message format indicating automated fixes
+9. WHEN auto-fix mode is configured to amend, THE SpecSync System SHALL add fixes to the original commit instead of creating a separate commit
+10. WHEN auto-fix is complete, THE SpecSync System SHALL preserve clean git history with clear attribution of automated changes
+
+### Requirement 10
+
+**User Story:** As a developer, I want to configure SpecSync's behavior modes, so that I can choose between blocking, task generation, or full automation based on my workflow needs.
+
+#### Acceptance Criteria
+
+1. WHEN SpecSync configuration is loaded, THE SpecSync System SHALL support three modes: blocking, task generation, and auto-fix
+2. WHEN blocking mode is enabled, THE SpecSync System SHALL prevent commits with drift and require manual fixes
+3. WHEN task generation mode is enabled, THE SpecSync System SHALL allow commits and generate a remediation tasks file
+4. WHEN auto-fix mode is enabled, THE SpecSync System SHALL allow commits and automatically fix drift using Kiro agent
+5. WHEN configuration is changed, THE SpecSync System SHALL apply new settings on the next validation without requiring restart
+6. WHEN auto-fix mode is enabled, THE SpecSync System SHALL check for required user permissions and credits before proceeding
+7. WHEN user switches modes, THE SpecSync System SHALL provide clear feedback about the active mode and its behavior
+8. WHEN configuration file is missing, THE SpecSync System SHALL use safe defaults (blocking mode with no automation)

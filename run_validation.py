@@ -6,6 +6,7 @@ This script runs validation on staged changes and returns appropriate exit codes
 
 import sys
 import subprocess
+import json
 from pathlib import Path
 
 # Add backend to path
@@ -16,6 +17,8 @@ from backend.drift_detector import DriftDetector
 from backend.test_analyzer import TestCoverageDetector
 from backend.doc_analyzer import DocumentationAlignmentDetector
 from backend.suggestion_generator import SuggestionGenerator
+from backend.auto_remediation import enable_auto_remediation
+from backend.auto_fix import enable_auto_fix, get_auto_fix_instructions
 
 
 def get_git_context():
@@ -61,9 +64,51 @@ def get_git_context():
         return None
 
 
+def load_config():
+    """Load SpecSync configuration."""
+    config_path = Path(".kiro/settings/specsync.json")
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    return {
+        "auto_remediation": {"enabled": False, "mode": "tasks"},
+        "auto_fix": {"enabled": False},
+        "validation": {"block_on_drift": True}
+    }
+
+
+def get_commit_message():
+    """Get the commit message from git."""
+    try:
+        # Try to get the message from COMMIT_EDITMSG
+        commit_msg_file = Path(".git/COMMIT_EDITMSG")
+        if commit_msg_file.exists():
+            with open(commit_msg_file, 'r') as f:
+                return f.readline().strip()
+    except:
+        pass
+    return "Current commit"
+
+
 def main():
     """Run validation on staged changes."""
     print("Initializing SpecSync validation...")
+    
+    # Load configuration
+    config = load_config()
+    auto_remediation_enabled = config.get("auto_remediation", {}).get("enabled", False)
+    remediation_mode = config.get("auto_remediation", {}).get("mode", "tasks")
+    auto_fix_enabled = config.get("auto_fix", {}).get("enabled", False)
+    allow_commit_with_tasks = config.get("validation", {}).get("allow_commit_with_tasks", True)
+    
+    if auto_remediation_enabled:
+        if remediation_mode == "auto-fix" and auto_fix_enabled:
+            print("🤖 Auto-fix mode: ENABLED")
+            print("   Kiro will automatically fix drift and create a follow-up commit")
+        else:
+            print("🔧 Auto-remediation mode: ENABLED")
+            print("   Tasks will be generated for any detected drift")
+        print()
     
     # Get git context
     git_context = get_git_context()
@@ -118,6 +163,92 @@ def main():
         print("❌ FAILURE: Validation issues detected")
         print()
         print(f"   Message: {message}")
+        print()
+        
+        # Auto-remediation mode
+        if auto_remediation_enabled:
+            print()
+            print("=" * 70)
+            
+            # Convert result to dict if needed
+            if isinstance(result, dict):
+                result_dict = result
+            else:
+                result_dict = {
+                    'success': success,
+                    'message': message,
+                    'drift_report': drift_report,
+                    'test_report': test_report,
+                    'doc_report': doc_report,
+                    'suggestions': suggestions
+                }
+            
+            # Check mode
+            if remediation_mode == "auto-fix" and auto_fix_enabled:
+                print("  AUTO-FIX MODE")
+                print("=" * 70)
+                print()
+                
+                # Get commit message
+                commit_msg = get_commit_message()
+                
+                # Execute auto-fix
+                auto_fix_result = enable_auto_fix(result_dict, config, commit_msg)
+                
+                if auto_fix_result.get('requires_kiro_agent', False):
+                    print("🤖 Kiro Agent Auto-Fix")
+                    print()
+                    print(f"   Estimated credits: {auto_fix_result.get('estimated_credits', 'Unknown')}")
+                    print()
+                    print("📋 Kiro will automatically:")
+                    for fix in auto_fix_result.get('fixes_applied', []):
+                        print(f"   ✓ {fix}")
+                    print()
+                    print("🔄 Process:")
+                    print("   1. Your commit proceeds")
+                    print("   2. Kiro analyzes drift")
+                    print("   3. Kiro creates fixes")
+                    print("   4. Kiro commits fixes")
+                    print("   5. Clean git history maintained")
+                    print()
+                    print("=" * 70)
+                    print()
+                    print("✅ Commit ALLOWED - Kiro will auto-fix drift in background")
+                    print()
+                    print("💡 Tip: Ask Kiro to 'Fix the drift from my last commit'")
+                    print("   Or wait for automatic processing")
+                    print()
+                    return 0  # Allow commit
+                else:
+                    print(f"❌ Auto-fix failed: {auto_fix_result.get('message')}")
+                    print()
+                    return 1
+            
+            else:
+                # Task generation mode
+                print("  AUTO-REMEDIATION MODE")
+                print("=" * 70)
+                print()
+                
+                # Generate remediation tasks
+                remediation_message = enable_auto_remediation(result_dict, feature_name="app")
+                print(remediation_message)
+                print()
+                print("=" * 70)
+                print()
+                
+                if allow_commit_with_tasks:
+                    print("✅ Commit ALLOWED with remediation tasks generated")
+                    print("   Please complete the tasks in the generated file")
+                    print()
+                    return 0  # Allow commit
+                else:
+                    print("❌ Commit BLOCKED - Fix issues before committing")
+                    print("   (Set 'allow_commit_with_tasks: true' to allow commits with tasks)")
+                    print()
+                    return 1  # Block commit
+        
+        # Standard mode (no auto-remediation)
         print()
         
         # Show drift issues
