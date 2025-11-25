@@ -45,4 +45,5 @@ async def get_user(id: int):
 
 @router.get("/users/{id}/posts")
 async def get_user_posts(id: int):
+    """Get posts for a specific user."""
     return {"user_id": id, "posts": []}
