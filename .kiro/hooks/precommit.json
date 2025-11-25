@@ -1,0 +1,7 @@
+{
+  "name": "SpecSync Pre-Commit Validation",
+  "description": "Validates staged changes for spec-code-test-doc alignment before commit",
+  "trigger": "on_commit",
+  "action": "send_message",
+  "message": "Please validate the staged changes for spec-code-test-doc alignment using SpecSync rules. Check:\n1. Spec alignment - verify code changes match specifications in .kiro/specs/\n2. Test coverage - ensure tests exist for all code changes\n3. Documentation - verify docs reflect API changes\n\nUse the MCP git context tool to get staged changes, then apply the steering rules from .kiro/steering/rules.md to detect drift and generate suggestions if needed."
+}
