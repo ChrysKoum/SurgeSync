@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecSync - Keep Your Code Aligned</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+        
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tagline {
+            font-size: 1.5em;
+            margin-bottom: 40px;
+            opacity: 0.95;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            margin: 40px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .problem {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+        
+        .solution {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .feature {
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            margin: 40px 0;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 40px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .code-block code {
+            font-size: 0.95em;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+            
+            .main-content {
+                padding: 30px 20px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔄 SpecSync</h1>
+            <p class="tagline">Keep Your Specs, Code, Tests & Docs in Perfect Sync</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/chryskoum/specsync" class="btn btn-primary">View on GitHub</a>
+                <a href="https://kiro.devpost.com" class="btn btn-secondary">Devpost Submission</a>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="problem">
+                <h2>😫 The Problem</h2>
+                <p>Developers constantly face <strong>drift</strong> between specifications, code, tests, and documentation. You update the code but forget the tests. You add an endpoint but the docs are outdated. This leads to:</p>
+                <ul style="margin-top: 15px; margin-left: 30px;">
+                    <li>Integration bugs in production</li>
+                    <li>Outdated documentation</li>
+                    <li>Missing test coverage</li>
+                    <li>Wasted developer time</li>
+                </ul>
+            </div>
+            
+            <div class="solution">
+                <h2>✨ The Solution</h2>
+                <p><strong>SpecSync</strong> is a commit-time quality gate that automatically detects drift and generates actionable tasks to fix it. It runs on every commit and ensures your specs, code, tests, and documentation stay perfectly synchronized.</p>
+            </div>
+            
+            <h2 style="text-align: center; margin: 60px 0 30px 0;">📹 See It In Action</h2>
+            <div class="video-container">
+                <!-- Replace YOUR_VIDEO_ID with your actual YouTube video ID -->
+                <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe>
+            </div>
+            
+            <h2 style="text-align: center; margin: 60px 0 30px 0;">✨ Key Features</h2>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Automatic Detection</h3>
+                    <p>Detects drift between specs, code, tests, and docs on every commit</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📋</div>
+                    <h3>Task Generation</h3>
+                    <p>Generates specific, actionable tasks to fix each issue</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Steering Rules</h3>
+                    <p>Customize validation behavior with project-specific rules</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Three Modes</h3>
+                    <p>Blocking, task generation, or auto-fix - choose what works for you</p>
+                </div>
+            </div>
+            
+            <h2 style="text-align: center; margin: 60px 0 30px 0;">🚀 Quick Start</h2>
+            <div class="code-block">
+                <code># Install SpecSync<br>
+pip install specsync<br>
+<br>
+# Install the pre-commit hook<br>
+python install_hook.py<br>
+<br>
+# Configure MCP in Kiro<br>
+npm install -g specsync-mcp-git-context<br>
+<br>
+# Make a change and commit<br>
+git add .<br>
+git commit -m "Add new feature"<br>
+<br>
+# SpecSync validates automatically! ✨</code>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Drift Detection</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Manual Checks</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Validation Modes</div>
+                </div>
+            </div>
+            
+            <h2 style="text-align: center; margin: 60px 0 30px 0;">🛠️ Built With Kiro</h2>
+            <p style="text-align: center; font-size: 1.1em; margin-bottom: 30px;">
+                SpecSync was built using Kiro's powerful features:
+            </p>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🎨</div>
+                    <h3>Vibe Coding</h3>
+                    <p>Rapid prototyping and code generation</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📋</div>
+                    <h3>Specs</h3>
+                    <p>Complete feature coverage with spec-driven development</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Steering</h3>
+                    <p>Consistent code quality throughout</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🪝</div>
+                    <h3>Hooks</h3>
+                    <p>Automated validation workflow</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔌</div>
+                    <h3>MCP</h3>
+                    <p>Seamless git integration</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 60px 0;">
+                <h2>Ready to eliminate drift?</h2>
+                <p style="font-size: 1.2em; margin: 20px 0;">Get started with SpecSync today</p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/chryskoum/specsync" class="btn btn-primary">⭐ Star on GitHub</a>
+                    <a href="https://github.com/chryskoum/specsync#readme" class="btn btn-secondary">📖 Read the Docs</a>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Built for the Kiroween Hackathon 2024</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com/chryskoum/specsync" style="color: white; margin: 0 10px;">GitHub</a> |
+                <a href="https://kiro.devpost.com" style="color: white; margin: 0 10px;">Devpost</a> |
+                <a href="https://github.com/chryskoum/specsync/blob/main/LICENSE" style="color: white; margin: 0 10px;">MIT License</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
