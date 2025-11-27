@@ -30,7 +30,9 @@ def get_git_context():
             capture_output=True,
             text=True,
             check=True,
-            shell=True
+            shell=True,
+            encoding='utf-8',
+            errors='replace'
         )
         branch = branch_result.stdout.strip()
         
@@ -40,17 +42,21 @@ def get_git_context():
             capture_output=True,
             text=True,
             check=True,
-            shell=True
+            shell=True,
+            encoding='utf-8',
+            errors='replace'
         )
         staged_files = [f.strip() for f in files_result.stdout.split('\n') if f.strip()]
         
-        # Get diff
+        # Get diff (with error handling for unicode)
         diff_result = subprocess.run(
             "git diff --cached",
             capture_output=True,
             text=True,
             check=True,
-            shell=True
+            shell=True,
+            encoding='utf-8',
+            errors='replace'
         )
         diff = diff_result.stdout
         
@@ -60,7 +66,7 @@ def get_git_context():
             "diff": diff
         }
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error getting git context: {e}")
+        print(f"[ERROR] Error getting git context: {e}")
         return None
 
 
@@ -106,14 +112,14 @@ def main():
             print("🤖 Semi-automatic fix mode: ENABLED")
             print("   You will need to manually ask Kiro to fix drift after commit")
         else:
-            print("🔧 Auto-remediation mode: ENABLED")
+            print("[*] Auto-remediation mode: ENABLED")
             print("   Tasks will be generated for any detected drift")
         print()
     
     # Get git context
     git_context = get_git_context()
     if not git_context:
-        print("❌ Failed to get git context")
+        print("[ERROR] Failed to get git context")
         return 1
     
     staged_files = git_context["stagedFiles"]
@@ -122,7 +128,7 @@ def main():
         print("ℹ️  No files staged for commit")
         return 0
     
-    print(f"📁 Validating {len(staged_files)} staged file(s)...")
+    print(f"[*] Validating {len(staged_files)} staged file(s)...")
     print()
     
     # Initialize orchestrator
@@ -155,12 +161,12 @@ def main():
         suggestions = result.suggestions
     
     if success:
-        print("✅ SUCCESS: All validations passed")
+        print("[OK] SUCCESS: All validations passed")
         print()
         print(f"   Message: {message}")
         return 0
     else:
-        print("❌ FAILURE: Validation issues detected")
+        print("[FAIL] FAILURE: Validation issues detected")
         print()
         print(f"   Message: {message}")
         print()
@@ -213,14 +219,14 @@ def main():
                     print()
                     print("=" * 70)
                     print()
-                    print("✅ Commit ALLOWED - Manual Kiro invocation required")
+                    print("[OK] Commit ALLOWED - Manual Kiro invocation required")
                     print()
-                    print("💡 After commit, open Kiro and say:")
+                    print("[TIP] After commit, open Kiro and say:")
                     print("   'Fix the drift from my last commit'")
                     print()
                     return 0  # Allow commit
                 else:
-                    print(f"❌ Semi-auto fix failed: {auto_fix_result.get('message')}")
+                    print(f"[FAIL] Semi-auto fix failed: {auto_fix_result.get('message')}")
                     print()
                     return 1
             
@@ -238,12 +244,12 @@ def main():
                 print()
                 
                 if allow_commit_with_tasks:
-                    print("✅ Commit ALLOWED with remediation tasks generated")
+                    print("[OK] Commit ALLOWED with remediation tasks generated")
                     print("   Please complete the tasks in the generated file")
                     print()
                     return 0  # Allow commit
                 else:
-                    print("❌ Commit BLOCKED - Fix issues before committing")
+                    print("[BLOCKED] Commit BLOCKED - Fix issues before committing")
                     print("   (Set 'allow_commit_with_tasks: true' to allow commits with tasks)")
                     print()
                     return 1  # Block commit
@@ -256,7 +262,7 @@ def main():
             aligned = drift_report.get('aligned', True) if isinstance(drift_report, dict) else drift_report.aligned
             if not aligned:
                 issues = drift_report.get('issues', []) if isinstance(drift_report, dict) else drift_report.issues
-                print("📊 Drift Issues:")
+                print("[INFO] Drift Issues:")
                 print(f"   Total: {len(issues)}")
                 for issue in issues[:5]:  # Show first 5
                     if isinstance(issue, dict):
@@ -333,7 +339,7 @@ if __name__ == "__main__":
         print("\n\n⚠️  Validation interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n\n❌ Unexpected error during validation: {e}")
+        print(f"\n\n[ERROR] Unexpected error during validation: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
