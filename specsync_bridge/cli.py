@@ -11,6 +11,8 @@ from specsync_bridge.sync import SyncEngine
 from specsync_bridge.detector import BridgeDriftDetector
 from specsync_bridge.extractor import extract_provider_contract, detect_repo_role
 from specsync_bridge.setup_wizard import setup_wizard
+from specsync_bridge.auto_remediation import AutoRemediationEngine
+from specsync_bridge.auto_fix import AutoFixEngine, get_auto_fix_instructions
 
 
 class Colors:
@@ -110,8 +112,15 @@ class BridgeCLI:
             else:
                 print(f"  {Colors.RED}✗{Colors.RESET} {r.dependency_name}: {', '.join(r.errors)}")
     
-    def validate(self):
-        print(f"{Colors.BOLD}Validating API calls...{Colors.RESET}\n")
+    def validate(self, mode: str = "blocking"):
+        """
+        Validate API calls with three modes:
+        - blocking: Block commit if drift detected (default)
+        - tasks: Generate remediation tasks, allow commit
+        - semi-auto: Prompt user to ask Kiro for fixes
+        """
+        print(f"{Colors.BOLD}Validating API calls...{Colors.RESET}")
+        print(f"  Mode: {Colors.CYAN}{mode}{Colors.RESET}\n")
         
         if not self.config_path.exists():
             print(f"{Colors.RED}✗ Bridge not initialized{Colors.RESET}")
@@ -121,20 +130,87 @@ class BridgeCLI:
         results = detector.detect_all_drift()
         
         total_issues = 0
+        all_issues = []
         for dep_name, issues in results.items():
             if not issues:
                 print(f"  {Colors.GREEN}✓{Colors.RESET} {dep_name}: No drift")
             else:
                 total_issues += len(issues)
+                all_issues.extend(issues)
                 print(f"  {Colors.RED}✗{Colors.RESET} {dep_name}: {len(issues)} issue(s)")
                 for issue in issues[:3]:
                     print(f"    - {issue.method} {issue.endpoint} ({issue.location})")
         
         if total_issues == 0:
             print(f"\n{Colors.GREEN}✓ All API calls align with contracts{Colors.RESET}")
-        else:
-            print(f"\n{Colors.RED}✗ {total_issues} drift issue(s) found{Colors.RESET}")
+            return
+        
+        # Handle different modes
+        if mode == "blocking":
+            print(f"\n{Colors.RED}✗ {total_issues} drift issue(s) found - COMMIT BLOCKED{Colors.RESET}")
+            print(f"\n{Colors.YELLOW}Fix the drift before committing, or use --mode tasks{Colors.RESET}")
             sys.exit(1)
+        
+        elif mode == "tasks":
+            print(f"\n{Colors.YELLOW}⚠ {total_issues} drift issue(s) found - generating tasks...{Colors.RESET}")
+            
+            # Build validation result for remediation engine
+            validation_result = {
+                'drift_report': {
+                    'aligned': False,
+                    'issues': [
+                        {
+                            'type': 'api_drift',
+                            'file': issue.location,
+                            'description': f"{issue.method} {issue.endpoint} - {issue.issue_type}"
+                        }
+                        for issue in all_issues
+                    ]
+                }
+            }
+            
+            engine = AutoRemediationEngine(feature_name="bridge")
+            result = engine.create_remediation_tasks(validation_result)
+            print(result)
+            print(f"\n{Colors.GREEN}✓ Commit allowed - complete tasks to fix drift{Colors.RESET}")
+        
+        elif mode == "semi-auto":
+            print(f"\n{Colors.YELLOW}⚠ {total_issues} drift issue(s) found{Colors.RESET}")
+            print(f"\n{Colors.CYAN}╔══════════════════════════════════════════════════════════╗{Colors.RESET}")
+            print(f"{Colors.CYAN}║  SEMI-AUTO MODE: Ask Kiro to fix the drift!              ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║                                                          ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  In Kiro chat, say:                                      ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  \"Fix the SpecSync drift in my code\"                     ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║                                                          ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  Kiro will automatically:                                ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  • Update specs with missing endpoints                   ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  • Create tests for new functionality                    ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  • Update documentation                                  ║{Colors.RESET}")
+            print(f"{Colors.CYAN}║  • Create a follow-up commit                             ║{Colors.RESET}")
+            print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════╝{Colors.RESET}")
+            
+            # Save drift info for Kiro to pick up
+            drift_file = self.repo_root / ".kiro/specs/bridge/pending-drift.json"
+            drift_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            import json
+            drift_data = {
+                'timestamp': datetime.now().isoformat(),
+                'total_issues': total_issues,
+                'issues': [
+                    {
+                        'method': issue.method,
+                        'endpoint': issue.endpoint,
+                        'location': issue.location,
+                        'type': issue.issue_type
+                    }
+                    for issue in all_issues
+                ]
+            }
+            with open(drift_file, 'w') as f:
+                json.dump(drift_data, f, indent=2)
+            
+            print(f"\n{Colors.GREEN}✓ Commit allowed - drift saved for Kiro{Colors.RESET}")
     
     def status(self):
         print(f"{Colors.BOLD}SpecSync Bridge Status{Colors.RESET}\n")
@@ -261,7 +337,9 @@ def main():
     sync_p.add_argument('dependency', nargs='?', help='Specific dependency')
     
     # validate
-    subparsers.add_parser('validate', help='Validate API calls')
+    validate_p = subparsers.add_parser('validate', help='Validate API calls')
+    validate_p.add_argument('--mode', choices=['blocking', 'tasks', 'semi-auto'], default='blocking',
+                           help='Validation mode: blocking (block commit), tasks (generate tasks), semi-auto (Kiro fixes)')
     
     # status
     subparsers.add_parser('status', help='Show status')
@@ -299,7 +377,7 @@ def main():
     elif args.command == 'sync':
         cli.sync(args.dependency)
     elif args.command == 'validate':
-        cli.validate()
+        cli.validate(args.mode)
     elif args.command == 'status':
         cli.status()
     elif args.command == 'extract':
