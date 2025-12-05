@@ -173,6 +173,39 @@ class ValidationOrchestrator:
         
         return False
     
+    def _load_validation_config(self) -> Dict[str, Any]:
+        """
+        Load validation configuration from specsync.json.
+        
+        Returns:
+            Dict with validation settings (check_spec_alignment, check_test_coverage, etc.)
+        """
+        import json
+        config_path = Path(".kiro/settings/specsync.json")
+        
+        defaults = {
+            'check_spec_alignment': True,
+            'check_test_coverage': True,
+            'check_documentation': True,
+            'check_bridge_contracts': True
+        }
+        
+        if not config_path.exists():
+            return defaults
+        
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+            validation = config.get('validation', {})
+            return {
+                'check_spec_alignment': validation.get('check_spec_alignment', True),
+                'check_test_coverage': validation.get('check_test_coverage', True),
+                'check_documentation': validation.get('check_documentation', True),
+                'check_bridge_contracts': validation.get('check_bridge_contracts', True)
+            }
+        except:
+            return defaults
+    
     def apply_steering_rules(self, validation_context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Apply steering rules to validation context.
@@ -287,42 +320,65 @@ class ValidationOrchestrator:
                     }
                 
                 # Run all validation steps with individual timing
+                # Check which validations are enabled in config
+                validation_config = self._load_validation_config()
+                check_spec = validation_config.get('check_spec_alignment', True)
+                check_tests = validation_config.get('check_test_coverage', True)
+                check_docs = validation_config.get('check_documentation', True)
+                check_bridge = validation_config.get('check_bridge_contracts', True)
+                
                 drift_report = None
                 test_report = None
                 doc_report = None
                 bridge_report = None
                 
-                try:
-                    step_start = time.time()
-                    drift_report = self._run_drift_detection(files_to_validate)
-                    self.timing_data['drift_detection'] = time.time() - step_start
-                except TimeoutException:
-                    self.timing_data['drift_detection'] = time.time() - step_start
-                    raise
+                # Spec/Drift detection
+                if check_spec:
+                    try:
+                        step_start = time.time()
+                        drift_report = self._run_drift_detection(files_to_validate)
+                        self.timing_data['drift_detection'] = time.time() - step_start
+                    except TimeoutException:
+                        self.timing_data['drift_detection'] = time.time() - step_start
+                        raise
+                else:
+                    self.timing_data['drift_detection'] = 0
                 
-                try:
-                    step_start = time.time()
-                    test_report = self._run_test_coverage_validation(files_to_validate)
-                    self.timing_data['test_coverage'] = time.time() - step_start
-                except TimeoutException:
-                    self.timing_data['test_coverage'] = time.time() - step_start
-                    raise
+                # Test coverage validation
+                if check_tests:
+                    try:
+                        step_start = time.time()
+                        test_report = self._run_test_coverage_validation(files_to_validate)
+                        self.timing_data['test_coverage'] = time.time() - step_start
+                    except TimeoutException:
+                        self.timing_data['test_coverage'] = time.time() - step_start
+                        raise
+                else:
+                    self.timing_data['test_coverage'] = 0
                 
-                try:
-                    step_start = time.time()
-                    doc_report = self._run_documentation_validation(files_to_validate)
-                    self.timing_data['documentation'] = time.time() - step_start
-                except TimeoutException:
-                    self.timing_data['documentation'] = time.time() - step_start
-                    raise
+                # Documentation validation
+                if check_docs:
+                    try:
+                        step_start = time.time()
+                        doc_report = self._run_documentation_validation(files_to_validate)
+                        self.timing_data['documentation'] = time.time() - step_start
+                    except TimeoutException:
+                        self.timing_data['documentation'] = time.time() - step_start
+                        raise
+                else:
+                    self.timing_data['documentation'] = 0
                 
-                try:
-                    step_start = time.time()
-                    bridge_report = self._run_bridge_validation()
-                    self.timing_data['bridge_validation'] = time.time() - step_start
-                except TimeoutException:
-                    self.timing_data['bridge_validation'] = time.time() - step_start
-                    raise
+                # Bridge contract validation
+                if check_bridge:
+                    try:
+                        step_start = time.time()
+                        bridge_report = self._run_bridge_validation()
+                        self.timing_data['bridge_validation'] = time.time() - step_start
+                    except TimeoutException:
+                        self.timing_data['bridge_validation'] = time.time() - step_start
+                        raise
+                else:
+                    self.timing_data['bridge_validation'] = 0
                 
                 # Aggregate results
                 step_start = time.time()

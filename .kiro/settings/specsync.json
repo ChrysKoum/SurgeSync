@@ -14,7 +14,11 @@
   "validation": {
     "block_on_drift": false,
     "allow_commit_with_tasks": true,
-    "description": "When auto_remediation is enabled, commits can proceed with a tasks file generated"
+    "check_spec_alignment": true,
+    "check_test_coverage": true,
+    "check_documentation": true,
+    "check_bridge_contracts": true,
+    "description": "Toggle which validations to run. Set to false to disable specific checks."
   },
   "task_generation": {
     "create_in_spec_folder": true,
